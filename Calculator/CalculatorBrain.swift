@@ -254,6 +254,10 @@ class CalculatorBrain {
             }
         }
     }
+    
+    func calculateProgram() {
+        program = internalProgram
+    }
     /*
     func appendVariableValue(variableName name: String, value: Double?) {
         if let variableValue = value {

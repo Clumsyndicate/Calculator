@@ -87,9 +87,9 @@ class CalculatorViewController: UIViewController {
     @IBAction func DegRad(_ sender: UIButton) {
         brain.isDeg = !brain.isDeg
         if brain.isDeg {
-            DegRad.setTitle("Deg", for: UIControlState())
+            DegRad.setTitle("deg", for: UIControlState())
         } else {
-            DegRad.setTitle("Rad", for: UIControlState())
+            DegRad.setTitle("rad", for: UIControlState())
         }
     }
     
@@ -160,10 +160,17 @@ class CalculatorViewController: UIViewController {
         decimalPointAdded = false
         brain.performOperation(sender.currentTitle!)
         print(brain.program)
-        brain.program = brain.program
+        brain.calculateProgram()
         displayValue = brain.result
     }
-
     
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        var destionationvc = segue.destination
+        
+        if let navvc = destionationvc as? UINavigationController {
+             destionationvc = navvc.visibleViewController ?? destionationvc
+            navvc.navigationBar.isHidden = false
+        }
+    }
 }
 
