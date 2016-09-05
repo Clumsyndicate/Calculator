@@ -10,18 +10,32 @@ import UIKit
 
 class GraphViewController: UIViewController {
 
-    var computeYForX: ((Double) -> Double)?
+    var computeYForX: ((Double) -> Double)? {
+        didSet {
+            graphView?.computeYForX = computeYForX
+        }
+    }
     var numberFormatter = NumberFormatter()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        //nav?.navigationBar.isHidden = false
         
         numberFormatter.alwaysShowsDecimalSeparator = false
         numberFormatter.maximumSignificantDigits = 3
+        
+        graphView.computeYForX = computeYForX
 
-        // Do any additional setup after loading the view.
+        if var string = funcDescription {
+            string.remove(at: string.index(before: string.endIndex))
+            string = "y=" + string
+            functionDescription.text = string
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        graphView.setNeedsDisplay()
     }
 
     override func didReceiveMemoryWarning() {
@@ -31,9 +45,10 @@ class GraphViewController: UIViewController {
     
     @IBOutlet weak var graphView: GraphView! {
         didSet {
-            graphView.addGestureRecognizer(UIPinchGestureRecognizer(target: graphView, action: #selector(graphView.pinchView)))
+            graphView.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinchView)))
             graphView.addGestureRecognizer(UITapGestureRecognizer(target: graphView, action: #selector(graphView.doubleTap)))
             graphView.addGestureRecognizer(UIPanGestureRecognizer(target: graphView, action: #selector(graphView.panView)))
+            graphView.computeYForX = computeYForX
         }
     }
     @IBAction func slider(_ scaleSlider: UISlider) {
@@ -58,15 +73,27 @@ class GraphViewController: UIViewController {
         
         scaleLabel.text = numberFormatter.string(from: NSNumber(value: Double(value)))
     }
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+    
+    func pinchView(recognizer: UIPinchGestureRecognizer) {
+        switch recognizer.state {
+        case .changed, .ended:
+            graphView.rangeX *= recognizer.scale
+            graphView.rangeY *= recognizer.scale
+            recognizer.scale = 1.0
+            scaleLabel.text = numberFormatter.string(from: NSNumber(value: Double(graphView.rangeX)))
+            graphView.setNeedsDisplay()
+        default:
+            break
+        }
     }
-    */
+
+    @IBOutlet weak var functionDescription: UILabel!
+    
+    var funcDescription: String? {
+        didSet {
+            
+        }
+    }
 
     
     

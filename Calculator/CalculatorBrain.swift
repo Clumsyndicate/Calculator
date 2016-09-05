@@ -88,7 +88,9 @@ class CalculatorBrain {
     fileprivate var accumulator = 0.0
     
     func setOperand(_ operand: Double) {
-        internalProgram.append(operand as AnyObject)
+        if !calculatingProgram {
+            internalProgram.append(operand as AnyObject)
+        }
         accumulator = operand
         print(accumulator)
         if startOfCalculation {
@@ -160,7 +162,9 @@ class CalculatorBrain {
     
     func performOperation(_ mathematicalSymbol: String) {
 
-        internalProgram.append(mathematicalSymbol as AnyObject)
+        if !calculatingProgram {
+            internalProgram.append(mathematicalSymbol as AnyObject)
+        }
         print(program)
         
         if trigOperations.contains(mathematicalSymbol) && isDeg {
@@ -196,9 +200,9 @@ class CalculatorBrain {
                 var symbol = mathematicalSymbol
                 symbol.remove(at: symbol.startIndex)
                 operations[symbol] = Operation.constant(accumulator)
-                internalProgram.remove(at: (internalProgram.endIndex - 1))
+                internalProgram.removeLast()
             }
-        } else {
+        } else { // only when constant value not in memory
             operations[mathematicalSymbol] = Operation.constant(0)
             accumulator = 0
             description += mathematicalSymbol
@@ -221,7 +225,9 @@ class CalculatorBrain {
         description = ""
         pendingBinary = nil
         typingExpression = false    // set to default
-        internalProgram.removeAll()
+        if !calculatingProgram {
+            internalProgram.removeAll()
+        }
     }
     
     var result: Double {
@@ -255,13 +261,13 @@ class CalculatorBrain {
         }
     }
     
+    var calculatingProgram = false
+    
     func calculateProgram() {
+        calculatingProgram = true
         program = internalProgram
+        print("M = \(operations["M"]!)")
+        calculatingProgram = false
     }
-    /*
-    func appendVariableValue(variableName name: String, value: Double?) {
-        if let variableValue = value {
-            
-        }
-    } */
+    
 }

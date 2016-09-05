@@ -28,6 +28,7 @@ class GraphView: UIView {
     
     var rangeX: CGFloat = 10 {
         didSet {
+            resolution = 0.05 * Double(rangeX / 10.0)
             setNeedsDisplay()
         }
     }
@@ -97,6 +98,7 @@ class GraphView: UIView {
     
     fileprivate var numberLabel = [UILabel]()
     
+    /*
     fileprivate func drawAxesSegments() {
         let segmentInterval = rangeX / interval
         var position = CGPoint(x: 0, y: bounds.midY)
@@ -182,72 +184,128 @@ class GraphView: UIView {
             accumulator -= segmentInterval
             count += 1
         }
-    }
+    } */
     
     fileprivate func drawCoordinateSystem() {
         
         let numberFormatter = NumberFormatter()
         numberFormatter.alwaysShowsDecimalSeparator = false
         numberFormatter.maximumSignificantDigits = 3
-        let segmentInterval = rangeX / interval
-        var position = CGPoint(x: 0, y: origin.y)
-        var accumulator = -rangeX - (origin.x - graphCenter.x) / bounds.maxX * 2 * rangeX
-        var counter = 0
+        var segmentInterval = rangeX / interval
+        var position = origin!
+        
+        var accumulator = CGFloat(0.0) //-(origin.x - graphCenter.x) / bounds.maxX * 2 * rangeX
         
         if (origin.y <= bounds.maxY) && (origin.y >= bounds.minY) {
-            while position.x < bounds.midX {
-                getXLineSeg(point: position).stroke()
-                position.x += segmentLengthX
-                
-                let rect = CGRect(x: position.x - 5 - segmentLengthX, y: position.y + 5, width: 40, height: 20)
-                let label = UILabel(frame: rect)
-                label.text = numberFormatter.string(from: NSNumber(value: Double(accumulator)))
-                numberLabel.append(label)
-                label.isHidden = false
-                label.font = UIFont.systemFont(ofSize: 12)
-                addSubview(label)
-                accumulator += segmentInterval
-                counter += 1
-            }
-            
-            counter -= 1
-            numberLabel.last?.text = String(describing: 0)
-            
-            position.x = bounds.maxX
-            print(position.x)
-            
-            var count = 0
-            accumulator = rangeX - (origin.x - graphCenter.x) / bounds.maxX * 2 * rangeX
-            while count < counter {//(position.x > bounds.midX) && (accumulator >= segmentInterval) {
+            while position.x >= bounds.minX {
                 getXLineSeg(point: position).stroke()
                 position.x -= segmentLengthX
                 
-                let rect = CGRect(x: position.x - 5 + segmentLengthX, y: position.y + 5, width: 40, height: 20)
+                let rect = CGRect(x: position.x + segmentLengthX, y: position.y + 5, width: 40, height: 20)
                 let label = UILabel(frame: rect)
                 label.text = numberFormatter.string(from: NSNumber(value: Double(accumulator)))
                 numberLabel.append(label)
                 label.isHidden = false
                 label.font = UIFont.systemFont(ofSize: 12)
                 addSubview(label)
+                //print("Label \(label.text!) added!")
                 accumulator -= segmentInterval
-                print(accumulator)
-                count += 1
             }
+            accumulator += segmentInterval
+
+            minX = Double(accumulator + (position.x - bounds.minX) / (bounds.width / 2) * rangeX)
+            
+            position.x = origin.x + segmentLengthX
+            accumulator = segmentInterval
+            
+            while position.x <= bounds.maxX {
+                
+                getXLineSeg(point: position).stroke()
+                position.x += segmentLengthX
+                
+                let rect = CGRect(x: position.x - segmentLengthX, y: position.y + 5, width: 40, height: 20)
+                let label = UILabel(frame: rect)
+                label.text = numberFormatter.string(from: NSNumber(value: Double(accumulator)))
+                numberLabel.append(label)
+                label.isHidden = false
+                label.font = UIFont.systemFont(ofSize: 12)
+                addSubview(label)
+                //print("Label \(label.text!) added!")
+                accumulator += segmentInterval
+            }
+            accumulator -= segmentInterval
+            let diff = bounds.maxX - position.x
+            let conversion = (bounds.width / 2) / rangeX
+            maxX = Double(accumulator + diff / conversion)
         }
+        
+        
         
         if (origin.x <= bounds.maxX) && (origin.x >= bounds.minX) {
             
+            position.x = origin.x
+            position.y = origin.y - segmentLengthY
+            accumulator = segmentInterval
+            segmentInterval = rangeY / interval
+            
+            while position.y >= bounds.minY {
+                getYLineSeg(point: position).stroke()
+                position.y -= segmentLengthY
+                
+                let rect = CGRect(x: position.x + 5, y: position.y + segmentLengthY, width: 40, height: 20)
+                let label = UILabel(frame: rect)
+                label.text = numberFormatter.string(from: NSNumber(value: Double(accumulator)))
+                numberLabel.append(label)
+                label.isHidden = false
+                label.font = UIFont.systemFont(ofSize: 12)
+                addSubview(label)
+                //print("Label \(label.text!) added!")
+                accumulator += segmentInterval
+            }
+            
+            accumulator -= segmentInterval
+            var diff = position.y - bounds.minY
+            var conversion = (bounds.height / 2) / rangeY
+            maxY = Double(accumulator + diff / conversion)
+            
+            position.y = origin.y + segmentLengthY
+            accumulator = -segmentInterval
+            
+            while position.y <= bounds.maxY {
+                
+                getYLineSeg(point: position).stroke()
+                position.y += segmentLengthY
+                
+                let rect = CGRect(x: position.x + 5, y: position.y - segmentLengthY, width: 40, height: 20)
+                let label = UILabel(frame: rect)
+                label.text = numberFormatter.string(from: NSNumber(value: Double(accumulator)))
+                numberLabel.append(label)
+                label.isHidden = false
+                label.font = UIFont.systemFont(ofSize: 12)
+                addSubview(label)
+                //print("Label \(label.text!) added!")
+                accumulator -= segmentInterval
+            }
+            accumulator += segmentInterval
+            diff = bounds.maxY - position.y
+            conversion = bounds.height / 2 / rangeY
+            print("\(diff/conversion) \(accumulator)")
+            minY = Double(accumulator + diff / conversion)
         }
+
+        print("maxX = \(maxX)")
+        print("minX = \(minX)")
+        print("maxY = \(maxY)")
+        print("minY = \(minY)")
 
         
     }
     
-    func pinchView(recognizer: UIPinchGestureRecognizer) {
-        
-    }
+    
     
     func doubleTap(recognizer: UITapGestureRecognizer) {
-        
+        originToCenter()
+        setNeedsDisplay()
     }
     
     func panView(recognizer: UIPanGestureRecognizer) {
@@ -262,8 +320,57 @@ class GraphView: UIView {
         }
     }
     
+    var computeYForX: ((Double) -> Double)?
+    
+    var minX: Double = -10
+    var maxX: Double = 10
+    var minY: Double = -10
+    var maxY: Double = 10
+    
+    fileprivate func updateMinMaxXY() {
+        
+    }
+    
+    fileprivate var resolution: Double = 0.05 //* Double(rangeX) / 10.0
+    
+    fileprivate func coordinateToCGPoint(x: Double, y: Double) -> CGPoint {
+        let displacementX = origin.x - graphCenter.x
+        let displacementY = origin.y - graphCenter.y
+        let scaleX = (rangeX / bounds.width * 2)
+        let scaleY = (rangeY / bounds.height * 2)
+        return CGPoint(x: (CGFloat(x) + rangeX) / scaleX + displacementX, y: (CGFloat(-y) + rangeY) / scaleY + displacementY)
+    }
+    
     fileprivate func drawFunction() {
         
+        var started = false
+        updateMinMaxXY()
+        let function = UIBezierPath()
+        
+        if let YForX = self.computeYForX {
+            if !YForX(minX).isNaN {
+                function.move(to: coordinateToCGPoint(x: minX, y: YForX(minX)))
+                started = true
+            }
+            print("x: \(coordinateToCGPoint(x: minX, y: YForX(minX)).x) y: \(coordinateToCGPoint(x: minX, y: YForX(minX)).y)")
+            var x = minX + resolution
+            print("x=\(x) maxX=\(maxX)")
+            while x < maxX {
+                if !started && !YForX(x).isNaN {
+                    let toPoint = coordinateToCGPoint(x: x, y: YForX(x))
+                    function.move(to: toPoint)
+                    started = true
+                } else if !YForX(x).isNaN {
+                    let toPoint = coordinateToCGPoint(x: x + resolution * 2, y: YForX(x + resolution * 2))
+                    let controlPoint = coordinateToCGPoint(x: x + resolution, y: YForX(x + resolution))
+                    function.addQuadCurve(to: toPoint, controlPoint: controlPoint)
+                    print("to x=\(toPoint.x) y=\(toPoint.y)")
+                }
+                x += resolution * 2
+            }
+        }
+        function.lineWidth = 1.0
+        function.stroke()
     }
     
     override func draw(_ rect: CGRect) {
@@ -283,7 +390,12 @@ class GraphView: UIView {
         
         // drawAxesSegments()
         drawCoordinateSystem()
+        drawFunction()
         
+        let path = UIBezierPath()
+        path.move(to: CGPoint(x: bounds.minX, y: bounds.minY))
+        path.addQuadCurve(to: CGPoint(x: bounds.maxX, y: bounds.maxY), controlPoint: CGPoint(x: bounds.midX, y: bounds.midY))
+        //path.stroke()
     }
     
     override func setNeedsDisplay() {

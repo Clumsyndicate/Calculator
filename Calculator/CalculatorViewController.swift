@@ -148,20 +148,39 @@ class CalculatorViewController: UIViewController {
         expressionLabel.text! = brain.description
     }
     
+    var calculatingGraph = false
+    var variableValue: Double!
+    var variableResult: Double!
     
     @IBAction func setVariableOperation(_ sender: UIButton) {
         if userInTheMiddleOfTyping {
-            if let value = displayValue {
-                brain.setVariableOperand(value)
-                // print("setOperand \(displayValue)")
+            if calculatingGraph {
+                brain.setVariableOperand(variableValue)
+                print("variable Value = \(variableValue)")
+            } else {
+                if let value = displayValue {
+                    brain.setVariableOperand(value)
+                     print("setOperand \(displayValue)")
+                }
             }
+        } else if calculatingGraph {
+            brain.setVariableOperand(variableValue)
+            print("variable Value = \(variableValue)")
         }
         userInTheMiddleOfTyping = false     // an operation has started
         decimalPointAdded = false
         brain.performOperation(sender.currentTitle!)
         print(brain.program)
         brain.calculateProgram()
-        displayValue = brain.result
+        if calculatingGraph {
+            variableResult = brain.result
+            brain.calculatingProgram = true
+            brain.clear()
+            brain.calculatingProgram = false
+            print("variableResult = \(variableResult)")
+        } else {
+            displayValue = brain.result
+        }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -171,6 +190,22 @@ class CalculatorViewController: UIViewController {
              destionationvc = navvc.visibleViewController ?? destionationvc
             navvc.navigationBar.isHidden = false
         }
+        if let graphvc = destionationvc as? GraphViewController {
+            graphvc.computeYForX = { (value: Double) -> Double in
+                self.calculatingGraph = true
+                self.variableValue = value
+                let button = UIButton()
+                button.setTitle("→M", for: .normal)
+                
+                print("value = \(value)")
+                self.setVariableOperation(button)
+                return self.variableResult
+            }
+            if let text = expressionLabel.text {
+                graphvc.funcDescription = text
+            }
+        }
+        
     }
 }
 
